@@ -1,0 +1,68 @@
+{{- range .Values.microservices }}
+{{- if .scaledObject.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ .name }}-keda
+  namespace: {{ $.Values.global.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .name }}-server
+  minReplicaCount: {{ .scaledObject.minReplicaCount }}
+  maxReplicaCount: {{ .scaledObject.maxReplicaCount }}
+  advanced:
+    horizontalPodAutoscalerConfig:
+      name: {{ .name }}-hpa
+      behavior:
+        scaleUp:
+          stabilizationWindowSeconds: {{ .scaledObject.scaleUp.stabilizationWindowSeconds }}
+          selectPolicy: {{ .scaledObject.scaleUp.selectPolicy }}
+          policies:
+            - type: Pods
+              value: {{ .scaledObject.scaleUp.pod.podNumber }}
+              periodSeconds: {{ .scaledObject.scaleUp.pod.seconds }}
+            - type: Percent
+              value: {{ .scaledObject.scaleUp.percent.percentage }}
+              periodSeconds: {{ .scaledObject.scaleUp.percent.seconds }}
+{{- range .scaledObject.scaleUp.extraPolicies }}
+          - type: {{ .type }}
+            value: {{ .value }}
+            periodSeconds: {{ .periodSeconds }}
+{{- end }}
+        scaleDown:
+          stabilizationWindowSeconds: {{ .scaledObject.scaleDown.stabilizationWindowSeconds }}
+          selectPolicy: {{ .scaledObject.scaleDown.selectPolicy }}
+          policies:
+            - type: Pods
+              value: {{ .scaledObject.scaleDown.pod.podNumber }}
+              periodSeconds: {{ .scaledObject.scaleDown.pod.seconds }}
+            - type: Percent
+              value: {{ .scaledObject.scaleDown.percent.percentage }}
+              periodSeconds: {{ .scaledObject.scaleDown.percent.seconds }}
+{{- range .scaledObject.scaleDown.extraPolicies }}
+          - type: {{ .type }}
+            value: {{ .value }}
+            periodSeconds: {{ .periodSeconds }}
+{{- end }}
+  triggers:
+    - type: cron
+      metadata:
+        timezone: Asia/Kuala_Lumpur 
+        start: {{ .scaledObject.cronOne.start }}
+        end: {{ .scaledObject.cronOne.end }}
+        desiredReplicas: {{ .scaledObject.cronOne.desiredReplicas | quote }}
+    - type: cron
+      metadata:
+        timezone: Asia/Kuala_Lumpur 
+        start: {{ .scaledObject.cronTwo.start }}
+        end: {{ .scaledObject.cronTwo.end }}
+        desiredReplicas: {{ .scaledObject.cronTwo.desiredReplicas | quote }}
+    - type: cpu
+      metricType: 'Utilization' # Allowed types are 'Utilization' or 'AverageValue'
+      metadata:
+        value: {{ .scaledObject.cpu.utilization | quote }}
+{{- end }}
+---
+{{- end }}

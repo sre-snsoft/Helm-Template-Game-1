@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  game-chart:
+  - apiVersion: v2
+    appVersion: "1.0"
+    created: "2025-03-05T20:54:29.760861+08:00"
+    description: A Helm chart for Kubernetes
+    digest: 6d67c52beeb837d1d0bf8b5fc5924b622cc5df7eb7cb004126c9b9e48aaa02ca
+    name: game-chart
+    type: application
+    urls:
+    - https://sre-snoft.github.io/Helm-Template-Game/game-chart-0.0.1.tgz
+    version: 0.0.1
+generated: "2025-03-05T20:54:29.759348+08:00"

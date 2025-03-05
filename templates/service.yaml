@@ -1,0 +1,29 @@
+{{- range .Values.microservices }}
+  {{- $microservice := . }}
+  {{- range .services }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .name }}
+  namespace: {{ $.Values.global.namespace }}
+  {{- with .annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: "{{ .type | default "ClusterIP" }}"
+  {{- with .clusterIP }}
+  clusterIP: "{{ . }}"
+  {{- end }}
+  ports:
+    - port: {{ .port }}
+      {{- with .portName }}
+      name: {{ . }}
+      {{- end }}
+      targetPort: {{ .targetPort | default .port }}
+      protocol: {{ .protocol | default "TCP" }}
+  selector:
+    app.kubernetes.io/name: {{ $microservice.name | lower }}-server
+---
+  {{- end }}
+{{- end }}

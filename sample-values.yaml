@@ -1,0 +1,158 @@
+#### SAMPLE to up ####
+### kubectel apply -f sample-values.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: <name>
+  namespace: argocd
+spec:
+  syncPolicy:
+    preserveResourcesOnDeletion: true
+  generators:
+    - clusters: {}
+  template:
+    metadata:
+      name: <name>
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: <namespace>
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true
+      source:
+        repoURL: https://sre-snsoft.github.io/Helm-Template-Game/
+        targetRevision: 0.0.1 #'{{metadata.annotations.workload_repo_revision}}'
+        chart: game-chart
+        helm:
+          values: |
+            global:
+              namespace: <namespace>
+              ecr: <account>.dkr.ecr.<region>.amazonaws.com
+              secret:
+                enabled: true
+                token: <token>
+            microservices:
+              - name: service-a
+                imageTag: 0.0.1
+                ecrName: <ecr repo name that storing the images of this service>
+                replica: 11
+                progressDeadlineSeconds: 600
+                scaledObject:
+                  enabled: true
+                  minReplicaCount: 1
+                  maxReplicaCount: 2
+                  scaleUp:
+                    stabilizationWindowSeconds: 5 
+                    selectPolicy: Max
+                    pod:
+                      podNumber: 10
+                      seconds: 30
+                    percent:
+                      percentage: 100
+                      seconds: 60
+                    extraPolicies: []
+                  scaleDown:
+                    stabilizationWindowSeconds: 3600
+                    selectPolicy: Min
+                    pod:
+                      podNumber: 4
+                      seconds: 60
+                    percent:
+                      percentage: 50
+                      seconds: 60
+                    extraPolicies: []
+                  cronOne:
+                    start: 00 08 * * *
+                    end: 00 19 * * *
+                    desiredReplicas: 1
+                  cronTwo: 
+                    start: 00 19 * * *
+                    end: 00 23 * * *
+                    desiredReplicas: 1
+                  cpu:
+                    utilization: 60
+                nodeSelector:
+                  role : nodepool
+                command: 
+                  - ""
+                args:
+                  - ""
+                  - ""
+                ports: 
+                  - containerPort: <port>
+                    name: <port_name>
+                    protocol: <port_protocol>
+                  - containerPort: <port>
+                    name: <port_name>
+                    protocol: <port_protocol>
+                env:
+                  - env_name1
+                volumeMounts:
+                  - volumeMounts_name1
+                terminationMessagePath: ""
+                terminationMessagePolicy: ""
+                workingDir: ""
+                dnsPolicy: ClusterFirst
+                restartPolicy: Always
+                terminationGracePeriodSeconds: 15
+                limits:
+                  cpu: '5'
+                  memory: 5000Mi
+                requests:
+                  cpu: '5'
+                  memory: 5000Mi
+                startupProbe:
+                  enabled: false
+                readinessProbe:
+                  enabled: true
+                  method: exec
+                  command:
+                    - /bin/grpc_health_probe
+                    - -addr=:<port>
+                    - -rpc-timeout=5s
+                  initialDelaySeconds: 10
+                livenessProbe:
+                  enabled: true
+                  method: exec
+                  command:
+                    - /bin/grpc_health_probe
+                    - -addr=:<port>
+                    - -rpc-timeout=5s
+                  initialDelaySeconds: 10
+                # created service name will be -> <service-a>-<port_name>-service, can use kubectl get svc -n <namespace> to check
+                services:
+                  # default values (type: ClusterIP, protocol: TCP, targetPort = Port)
+                  - name: <port_name>
+                    port: <port>
+                  - name: <port_name>
+                    port: <port>
+                ingress:
+                  enabled: false
+              - name: service-b
+                imageTag: v0.0.0
+                replica: 1
+                scaledObject:
+                  enabled: false
+                nodeSelector: 
+                  app: hello
+                limits:
+                  cpu: '500m'
+                  memory: 500Mi
+                requests:
+                  cpu: '500m'
+                  memory: 500Mi
+                startupProbe:
+                  enabled: false
+                readinessProbe:
+                  enabled: false
+                livenessProbe:
+                  enabled: false
+                ingress:
+                  enabled: false
