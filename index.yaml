@@ -9,6 +9,6 @@ entries:
     name: game-chart
     type: application
     urls:
-    - https://sre-snsoft.github.io/Helm-Template-Game/game-chart-0.0.1.tgz
+    - https://sre-snsoft.github.io/Helm-Template-Game-1/game-chart-0.0.1.tgz
     version: 0.0.1
 generated: "2025-03-06T09:56:00.888891+08:00"
